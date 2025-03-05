@@ -17,7 +17,7 @@ use esp_idf_hal::{
     usb_serial::{self, UsbSerialDriver},
 };
 use eyre::Context;
-use log::{debug, error, info, warn};
+use log::{debug, error, info, trace, warn};
 use nfc::ndef::BleRole;
 use palette::{Srgb, rgb::Rgb};
 use pn532::nb;
@@ -503,7 +503,7 @@ fn wait_for_ack(usb_serial: &mut UsbSerialDriver<'_>) -> eyre::Result<()> {
 }
 
 fn blocking_write_all(usb_serial: &mut UsbSerialDriver<'_>, mut data: &[u8]) -> eyre::Result<()> {
-    info!("attempting write of data: {}", hex::encode(data));
+    trace!("attempting write of data: {}", hex::encode(data));
 
     while !data.is_empty() {
         // Never try to write more than half the buffer size. If the data is
@@ -515,7 +515,7 @@ fn blocking_write_all(usb_serial: &mut UsbSerialDriver<'_>, mut data: &[u8]) -> 
                 TickType::new_millis(1_000).into(),
             )
             .wrap_err("error writing data to usb serial")?;
-        info!("wrote {len} bytes, remaining: {}", hex::encode(data));
+        trace!("wrote {len} bytes, remaining: {}", hex::encode(data));
         data = &data[len..];
         esp_idf_hal::task::do_yield();
     }

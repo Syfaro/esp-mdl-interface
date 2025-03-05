@@ -14,7 +14,7 @@ use esp32_nimble::{
     uuid128,
 };
 use eyre::OptionExt;
-use log::{error, info};
+use log::{error, info, trace};
 
 use crate::{
     DeviceResponse, LedMode, ble::RemovableSender, blocking_write_all, serialize_response,
@@ -90,7 +90,7 @@ pub fn connect_client(
         let state = service.get_characteristic(STATE_ID).await?;
         state
             .on_notify(|data| {
-                info!("got state notify: {}", hex::encode(data));
+                trace!("got state notify: {}", hex::encode(data));
             })
             .subscribe_notify(true)
             .await?;
@@ -103,7 +103,7 @@ pub fn connect_client(
                 let rx_data_buf = rx_data_buf.clone();
 
                 move |data| {
-                    info!("got server_client notify: {}", hex::encode(data));
+                    trace!("got server_client notify: {}", hex::encode(data));
                     rx_data_buf.lock().push(data.to_vec());
 
                     if data[0] == 0x00 {
@@ -162,7 +162,7 @@ pub fn connect_client(
                 payload: &chunk[1..],
                 complete,
             };
-            info!("writing chunk, len {}, complete {complete}", chunk.len());
+            trace!("writing chunk, len {}, complete {complete}", chunk.len());
             let data = crate::serialize_response(&mut buf, &resp)?;
             blocking_write_all(usb_serial, data)?;
             wait_for_ack(usb_serial)?;

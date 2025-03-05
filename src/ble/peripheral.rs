@@ -14,7 +14,7 @@ use esp32_nimble::{
     uuid128,
 };
 use eyre::{Context, OptionExt};
-use log::{error, info};
+use log::{error, info, trace};
 use oneshot::Receiver;
 
 use crate::{
@@ -96,7 +96,7 @@ pub fn serve_peripheral(
 
         move |args| {
             let recv_data = args.recv_data();
-            info!("got state write: {}", hex::encode(recv_data));
+            trace!("got state write: {}", hex::encode(recv_data));
 
             if recv_data.len() != 1 {
                 error!("incorrect state length for recv data: {recv_data:?}");
@@ -120,7 +120,7 @@ pub fn serve_peripheral(
         let rx_data_buf = rx_data_buf.clone();
 
         move |args| {
-            info!(
+            trace!(
                 "got client to server write: {}",
                 hex::encode(args.recv_data())
             );
@@ -248,7 +248,7 @@ fn exchange_data(
         buf.push(if chunks.peek().is_some() { 0x01 } else { 0x00 });
         buf.extend_from_slice(chunk);
 
-        info!("notifying chunk len={}, more={:02x}", buf.len(), buf[0]);
+        trace!("notifying chunk len={}, more={:02x}", buf.len(), buf[0]);
         server_client.lock().set_value(&buf).notify();
         esp_idf_hal::task::do_yield();
     }
@@ -280,7 +280,7 @@ fn exchange_data(
             payload: &chunk[1..],
             complete,
         };
-        info!("writing chunk, len {}, complete {complete}", chunk.len());
+        trace!("writing chunk, len {}, complete {complete}", chunk.len());
         let data = crate::serialize_response(&mut buf, &resp)
             .wrap_err("error serializing ble engagement data")?;
         blocking_write_all(usb_serial, data).wrap_err("error writing ble engagement data")?;
